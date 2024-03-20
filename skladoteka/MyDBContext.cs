@@ -137,17 +137,13 @@ namespace skladoteka
             return dataList;
         }
 
-        public void AddRecordToInventory(int personId, int itemId, string serialNumber)
+        public void AddRecordToInventory(int personId, int itemId, string serialNumber, int quantity = 1)
         {
             if (!IsIdValid("People", personId))
-            {
                 return;
-            }
 
             if (!IsIdValid("Items", itemId))
-            {
                 return;
-            }
 
             DateTime currentDate = DateTime.Now;
 
@@ -164,11 +160,14 @@ namespace skladoteka
                     cmd.Parameters.AddWithValue("@SerialNumber", serialNumber);
                     cmd.Parameters.AddWithValue("@DateAdded", currentDate);
 
-                    cmd.ExecuteNonQuery();
+                    for (int i = 0; i < quantity; i++)
+                    {
+                        cmd.ExecuteNonQuery();
+                    }
                 }
             }
         }
-        
+
         private bool IsIdValid(string tableName, int id)
         {
             using (var connection = GetConnection())
@@ -231,24 +230,15 @@ namespace skladoteka
                                "INNER JOIN People ON Inventory.PersonId = People.Id " +
                                "INNER JOIN Items ON Inventory.ItemId = Items.Id";
 
-                // Если передан параметр personId, добавляем условие WHERE для фильтрации по этому параметру
                 if (personId != null)
-                {
                     query += $" WHERE Inventory.PersonId = {personId}";
-                }
 
-                // Если передан параметр itemId, добавляем условие WHERE для фильтрации по этому параметру
                 if (itemId != null)
                 {
-                    // Если уже есть условие WHERE, то добавляем AND
                     if (personId != null)
-                    {
                         query += $" AND Inventory.ItemId = {itemId}";
-                    }
-                    else // Иначе начинаем новое условие WHERE
-                    {
+                    else
                         query += $" WHERE Inventory.ItemId = {itemId}";
-                    }
                 }
 
                 using (var cmd = new SQLiteCommand(query, connection))
@@ -260,9 +250,18 @@ namespace skladoteka
                 }
             }
 
+            DataColumn indexColumn = new DataColumn("Номер", typeof(int));
+            dataTable.Columns.Add(indexColumn);
+
+            for (int i = 0; i < dataTable.Rows.Count; i++)
+            {
+                dataTable.Rows[i]["Номер"] = i + 1;
+            }
+
+            dataTable.Columns["Номер"].SetOrdinal(0);
+
             return dataTable;
         }
-    
-    
+
     }
 }

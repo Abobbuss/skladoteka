@@ -33,14 +33,24 @@ namespace skladoteka
             addDateToCombox(comboBox4, allPeople);
             addDateToCombox(comboBox5, allItem);
 
+            comboBox1.Tag = allPeople;
+            comboBox2.Tag = allItem;
+            comboBox4.Tag = allPeople;
+            comboBox5.Tag = allItem;
+
             dataGridView1.DataSource = _myDBContext.GetInventoryRecords();
+
+            comboBox1.TextChanged += combobox_TextChanged;
+            comboBox2.TextChanged += combobox_TextChanged;
+            comboBox4.TextChanged += combobox_TextChanged;
+            comboBox5.TextChanged += combobox_TextChanged;
+
         }
 
         private void addDateToCombox(ComboBox comboBox, List<string> list)
         {
             comboBox.Items.Clear();
-            comboBox.Tag = list;
-
+            
             foreach (string item in list)
             {
                 comboBox.Items.Add(item);
@@ -49,20 +59,48 @@ namespace skladoteka
 
         private void button1_Click(object sender, EventArgs e)
         {
-            string selectedPerson = comboBox1.SelectedItem.ToString();
-            string selectedItem = comboBox2.SelectedItem.ToString();
-            string serialNumber = textBox1.Text.ToString();
+            string selectedPerson = comboBox1.SelectedItem?.ToString();
+            string selectedItem = comboBox2.SelectedItem?.ToString();
+            string serialNumber = textBox1.Text?.ToString();
+            string quantity = textBox2.Text?.ToString();
 
             int personId = _myDBContext.GetPersonIdByName(selectedPerson);
             int itemId = _myDBContext.GetItemIdByName(selectedItem);
+            int quantityInt;
 
-            _myDBContext.AddRecordToInventory(personId, itemId, serialNumber);
+            int.TryParse(quantity, out quantityInt);
 
+            _myDBContext.AddRecordToInventory(personId, itemId, serialNumber, quantityInt);
         }
 
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
         {
 
+        }
+
+        private void combobox_TextChanged(object sender, EventArgs e)
+        {
+            ComboBox comboBox = sender as ComboBox;
+
+            if (comboBox != null)
+            {
+                string searchText = comboBox.Text.ToLower();
+                List<string> allItems = comboBox.Tag as List<string>;
+
+                if (allItems != null)
+                {
+                    int selectionStart = comboBox.SelectionStart;
+                    int selectionLength = comboBox.SelectionLength;
+
+                    List<string> filteredItems = allItems.Where(item => item.ToLower().Contains(searchText)).ToList();
+
+                    if (comboBox.SelectedItem == null)
+                        addDateToCombox(comboBox, filteredItems);
+
+
+                    comboBox.Select(selectionStart, selectionLength);
+                }
+            }
         }
 
         private void label2_Click(object sender, EventArgs e)
@@ -153,6 +191,11 @@ namespace skladoteka
         }
 
         private void comboBox3_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label11_Click(object sender, EventArgs e)
         {
 
         }
