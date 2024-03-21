@@ -39,11 +39,27 @@ namespace skladoteka
             comboBox5.Tag = allItem;
 
             dataGridView1.DataSource = _myDBContext.GetInventoryRecords();
+            dataGridView1.CellEndEdit += DataGridView_CellEndEdit;
+            dataGridView1.UserDeletingRow += DataGridView_UserDeletingRow;
 
             comboBox1.TextChanged += combobox_TextChanged;
             comboBox2.TextChanged += combobox_TextChanged;
             comboBox4.TextChanged += combobox_TextChanged;
             comboBox5.TextChanged += combobox_TextChanged;
+
+            textBox2.Text = "1";
+
+            var comboBoxColumn = new DataGridViewComboBoxColumn();
+            comboBoxColumn.Name = "comboBoxColumn";
+            comboBoxColumn.DisplayStyle = DataGridViewComboBoxDisplayStyle.ComboBox;
+
+            // Заполнение ComboBox данными
+            comboBoxColumn.Items.Add("Значение 1");
+            comboBoxColumn.Items.Add("Значение 2");
+            comboBoxColumn.Items.Add("Значение 3");
+
+            // Добавление столбца в DataGridView
+            dataGridView1.Columns.Add(comboBoxColumn);
 
         }
 
@@ -167,6 +183,27 @@ namespace skladoteka
         {
 
         }
+
+        private void DataGridView_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+        {
+            DataGridView dataGridView = sender as DataGridView;
+
+            var newValue = dataGridView[e.ColumnIndex, e.RowIndex].Value.ToString();
+
+            var id = Convert.ToInt32(dataGridView["ID", e.RowIndex].Value);
+
+            var columnName = dataGridView.Columns[e.ColumnIndex].Name;
+
+            _myDBContext.UpdateInventory(columnName, newValue, id);
+        }
+
+        private void DataGridView_UserDeletingRow(object sender, DataGridViewRowCancelEventArgs e)
+        {
+            int id = Convert.ToInt32(e.Row.Cells["ID"].Value);
+
+            _myDBContext.DeleteInventoryRecord(id);
+        }
+
 
         private void button2_Click(object sender, EventArgs e)
         {

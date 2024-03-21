@@ -220,11 +220,11 @@ namespace skladoteka
         {
             DataTable dataTable = new DataTable();
 
-            using (var connection = new SQLiteConnection(_connectionString))
+            using (var connection = GetConnection())
             {
                 connection.Open();
 
-                string query = "SELECT People.FullName AS PersonName, Items.Name AS ItemName, " +
+                string query = "SELECT People.FullName AS PersonId, Items.Name AS ItemId, " +
                                "Inventory.SerialNumber, Inventory.DateAdded " +
                                "FROM Inventory " +
                                "INNER JOIN People ON Inventory.PersonId = People.Id " +
@@ -250,17 +250,67 @@ namespace skladoteka
                 }
             }
 
-            DataColumn indexColumn = new DataColumn("Номер", typeof(int));
+            DataColumn indexColumn = new DataColumn("ID", typeof(int));
             dataTable.Columns.Add(indexColumn);
 
             for (int i = 0; i < dataTable.Rows.Count; i++)
             {
-                dataTable.Rows[i]["Номер"] = i + 1;
+                dataTable.Rows[i]["ID"] = i + 1;
             }
 
-            dataTable.Columns["Номер"].SetOrdinal(0);
+            dataTable.Columns["ID"].SetOrdinal(0);
 
             return dataTable;
+        }
+
+        public void UpdateInventory(string columnName, string newValue, int id)
+        {
+            try
+            {
+                using (var connection = GetConnection())
+                {
+                    connection.Open();
+
+                    string query = $"UPDATE Inventory SET {columnName} = @NewValue WHERE ID = @ID";
+
+                    using (var cmd = new SQLiteCommand(query, connection))
+                    {
+                        cmd.Parameters.AddWithValue("@NewValue", newValue);
+                        cmd.Parameters.AddWithValue("@ID", id);
+
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Ошибка при обновлении записи: " + ex.Message);
+                return;
+            }
+        }
+
+        public void DeleteInventoryRecord(int id)
+        {
+            try
+            {
+                using (var connection = GetConnection())
+                {
+                    connection.Open();
+
+                    string query = "DELETE FROM Inventory WHERE ID = @ID";
+
+                    using (var cmd = new SQLiteCommand(query, connection))
+                    {
+                        cmd.Parameters.AddWithValue("@ID", id);
+
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Ошибка при удалении записи: " + ex.Message);
+            }
         }
 
     }
