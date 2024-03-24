@@ -15,6 +15,7 @@ namespace skladoteka
     {
         private MyDBContext _myDBContext;
 
+
         public Form1()
         {
             string dbPath = "skladoteka.db";
@@ -37,30 +38,23 @@ namespace skladoteka
             comboBox2.Tag = allItem;
             comboBox4.Tag = allPeople;
             comboBox5.Tag = allItem;
+            comboBox10.Tag = allItem;
+            comboBox11.Tag = allPeople;
 
             dataGridView1.DataSource = _myDBContext.GetInventoryRecords();
-            dataGridView1.CellEndEdit += DataGridView_CellEndEdit;
             dataGridView1.UserDeletingRow += DataGridView_UserDeletingRow;
+            dataGridView1.CellClick += DataGridViewCellClicked;
 
             comboBox1.TextChanged += combobox_TextChanged;
             comboBox2.TextChanged += combobox_TextChanged;
             comboBox4.TextChanged += combobox_TextChanged;
             comboBox5.TextChanged += combobox_TextChanged;
+            comboBox10.TextChanged += combobox_TextChanged;
+            comboBox11.TextChanged += combobox_TextChanged;
 
             textBox2.Text = "1";
 
-            var comboBoxColumn = new DataGridViewComboBoxColumn();
-            comboBoxColumn.Name = "comboBoxColumn";
-            comboBoxColumn.DisplayStyle = DataGridViewComboBoxDisplayStyle.ComboBox;
-
-            // Заполнение ComboBox данными
-            comboBoxColumn.Items.Add("Значение 1");
-            comboBoxColumn.Items.Add("Значение 2");
-            comboBoxColumn.Items.Add("Значение 3");
-
-            // Добавление столбца в DataGridView
-            dataGridView1.Columns.Add(comboBoxColumn);
-
+            EnableDisableChangeInfoToInventory(false);
         }
 
         private void addDateToCombox(ComboBox comboBox, List<string> list)
@@ -89,11 +83,6 @@ namespace skladoteka
             _myDBContext.AddRecordToInventory(personId, itemId, serialNumber, quantityInt);
         }
 
-        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
-        {
-
-        }
-
         private void combobox_TextChanged(object sender, EventArgs e)
         {
             ComboBox comboBox = sender as ComboBox;
@@ -113,10 +102,89 @@ namespace skladoteka
                     if (comboBox.SelectedItem == null)
                         addDateToCombox(comboBox, filteredItems);
 
-
                     comboBox.Select(selectionStart, selectionLength);
                 }
             }
+        }
+
+        private void DataGridView_UserDeletingRow(object sender, DataGridViewRowCancelEventArgs e)
+        {
+            int id = Convert.ToInt32(e.Row.Cells["ID"].Value);
+
+            _myDBContext.DeleteInventoryRecord(id);
+        }
+
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            string person = comboBox4.SelectedItem?.ToString();
+            string city = comboBox3.SelectedItem?.ToString();
+            string item = comboBox5.SelectedItem?.ToString();
+
+            int? personId = string.IsNullOrEmpty(person) ? (int?)null : _myDBContext.GetPersonIdByName(person);
+            int? itemId = string.IsNullOrEmpty(item) ? (int?)null : _myDBContext.GetItemIdByName(item);
+
+            dataGridView1.DataSource = _myDBContext.GetInventoryRecords(personId, itemId);
+        }
+
+        private void DataGridViewCellClicked(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0)
+                ChangeInfoToInventory(e.RowIndex + 1);
+        }
+
+        private void ChangeInfoToInventory(int id)
+        {
+            EnableDisableChangeInfoToInventory(true);
+            addDateToCombox(comboBox11, _myDBContext.GetAllPeople());
+            addDateToCombox(comboBox10, _myDBContext.GetAllItems());
+
+            Dictionary<string, object> recordValues = _myDBContext.GetInventoryRecordById(id);
+
+            if (recordValues.ContainsKey("PersonId"))
+            {
+                comboBox11.SelectedItem = recordValues["PersonId"].ToString();
+                
+            }
+
+            if (recordValues.ContainsKey("ItemId"))
+            {
+                comboBox10.SelectedItem = recordValues["ItemId"].ToString();
+            }
+
+            if (recordValues.ContainsKey("SerialNumber"))
+            {
+                textBox3.Text = recordValues["SerialNumber"].ToString();
+            }
+
+            if (recordValues.ContainsKey("DateAdded"))
+            {
+                textBox4.Text = recordValues["DateAdded"].ToString();
+            }
+        }
+        
+        private void EnableDisableChangeInfoToInventory(bool flag)
+        {
+            label13.Visible = flag;
+            label14.Visible = flag;
+            label15.Visible = flag;
+            label16.Visible = flag;
+            label17.Visible = flag;
+            textBox4.Visible = flag;
+            textBox3.Visible = flag;
+            comboBox10.Visible = flag;
+            comboBox11.Visible = flag;
+            button3.Visible = flag;
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
         }
 
         private void label2_Click(object sender, EventArgs e)
@@ -184,38 +252,6 @@ namespace skladoteka
 
         }
 
-        private void DataGridView_CellEndEdit(object sender, DataGridViewCellEventArgs e)
-        {
-            DataGridView dataGridView = sender as DataGridView;
-
-            var newValue = dataGridView[e.ColumnIndex, e.RowIndex].Value.ToString();
-
-            var id = Convert.ToInt32(dataGridView["ID", e.RowIndex].Value);
-
-            var columnName = dataGridView.Columns[e.ColumnIndex].Name;
-
-            _myDBContext.UpdateInventory(columnName, newValue, id);
-        }
-
-        private void DataGridView_UserDeletingRow(object sender, DataGridViewRowCancelEventArgs e)
-        {
-            int id = Convert.ToInt32(e.Row.Cells["ID"].Value);
-
-            _myDBContext.DeleteInventoryRecord(id);
-        }
-
-
-        private void button2_Click(object sender, EventArgs e)
-        {
-            string person = comboBox4.SelectedItem?.ToString();
-            string city = comboBox3.SelectedItem?.ToString();
-            string item = comboBox5.SelectedItem?.ToString();
-
-            int? personId = string.IsNullOrEmpty(person) ? (int?)null : _myDBContext.GetPersonIdByName(person);
-            int? itemId = string.IsNullOrEmpty(item) ? (int?)null : _myDBContext.GetItemIdByName(item);
-
-            dataGridView1.DataSource = _myDBContext.GetInventoryRecords(personId, itemId);
-        }
 
         private void comboBox4_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -233,6 +269,61 @@ namespace skladoteka
         }
 
         private void label11_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label13_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label16_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label15_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label17_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label14_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void comboBox11_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void comboBox10_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void comboBox9_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void comboBox8_SelectedIndexChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void textBox3_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void textBox4_TextChanged(object sender, EventArgs e)
         {
 
         }

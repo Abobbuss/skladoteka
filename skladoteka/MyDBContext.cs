@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.SQLite;
 using System.Data;
 using System.IO;
+using System.Windows.Forms;
 
 namespace skladoteka
 {
@@ -261,6 +262,41 @@ namespace skladoteka
             dataTable.Columns["ID"].SetOrdinal(0);
 
             return dataTable;
+        }
+
+        public Dictionary<string, object> GetInventoryRecordById(int recordId)
+        {
+            Dictionary<string, object> recordValues = new Dictionary<string, object>();
+
+            using (var connection = GetConnection())
+            {
+                connection.Open();
+
+                string query = "SELECT People.FullName AS PersonId, Items.Name AS ItemId, " +
+                               "Inventory.SerialNumber, Inventory.DateAdded " +
+                               "FROM Inventory " +
+                               "INNER JOIN People ON Inventory.PersonId = People.Id " +
+                               "INNER JOIN Items ON Inventory.ItemId = Items.Id " +
+                               $"WHERE Inventory.Id = {recordId}";
+
+                using (var cmd = new SQLiteCommand(query, connection))
+                {
+                    using (var reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            for (int i = 0; i < reader.FieldCount; i++)
+                            {
+                                string columnName = reader.GetName(i);
+                                object columnValue = reader.GetValue(i);
+                                recordValues.Add(columnName, columnValue);
+                            }
+                        }
+                    }
+                }
+            }
+
+            return recordValues;
         }
 
         public void UpdateInventory(string columnName, string newValue, int id)
