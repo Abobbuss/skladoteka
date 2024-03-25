@@ -108,6 +108,12 @@ namespace skladoteka
             return GetAllData(query, "FullName");
         }
 
+        public List<string> GetAllCities()
+        {
+            string query = "SELECT Name FROM Cities";
+            return GetAllData(query, "Name");
+        }
+
         public List<string> GetAllItems()
         {
             string query = "SELECT Name FROM Items";
@@ -189,6 +195,7 @@ namespace skladoteka
         }
 
         public int GetPersonIdByName(string fullName) => GetIdByParameter("People", "FullName", fullName);
+        public int GetCityIdByName(string cityName) => GetIdByParameter("Cities", "Name", cityName);
 
         public int GetItemIdByName(string itemName) => GetIdByParameter("Items", "Name", itemName);
 
@@ -217,7 +224,7 @@ namespace skladoteka
             return id;
         }
 
-        public DataTable GetInventoryRecords(int? personId = null, int? itemId = null)
+        public DataTable GetInventoryRecords(int? personId = null, int? itemId = null, int? cityId = null)
         {
             DataTable dataTable = new DataTable();
 
@@ -231,15 +238,25 @@ namespace skladoteka
                                "INNER JOIN People ON Inventory.PersonId = People.Id " +
                                "INNER JOIN Items ON Inventory.ItemId = Items.Id";
 
+                // Добавляем фильтрацию по personId
                 if (personId != null)
+                {
                     query += $" WHERE Inventory.PersonId = {personId}";
+                }
 
+                // Добавляем фильтрацию по itemId
                 if (itemId != null)
                 {
-                    if (personId != null)
-                        query += $" AND Inventory.ItemId = {itemId}";
-                    else
-                        query += $" WHERE Inventory.ItemId = {itemId}";
+                    query += personId != null ? $" AND Inventory.ItemId = {itemId}" : $" WHERE Inventory.ItemId = {itemId}";
+                }
+
+                // Добавляем фильтрацию по cityId
+                if (cityId != null)
+                {
+                    // Подзапрос для получения идентификаторов людей из указанного города
+                    string subQuery = $"SELECT Id FROM People WHERE CityId = {cityId}";
+
+                    query += $" AND Inventory.PersonId IN ({subQuery})";
                 }
 
                 using (var cmd = new SQLiteCommand(query, connection))
@@ -263,6 +280,7 @@ namespace skladoteka
 
             return dataTable;
         }
+
 
         public Dictionary<string, object> GetInventoryRecordById(int recordId)
         {
@@ -299,7 +317,7 @@ namespace skladoteka
             return recordValues;
         }
 
-        public void UpdateInventory(string columnName, string newValue, int id)
+        public void UpdateInventory(string columnName, int newValue, int id)
         {
             try
             {

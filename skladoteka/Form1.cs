@@ -28,14 +28,17 @@ namespace skladoteka
         {
             List<string> allPeople = _myDBContext.GetAllPeople();
             List<string> allItem = _myDBContext.GetAllItems();
+            List<string> allCities = _myDBContext.GetAllCities();
 
             addDateToCombox(comboBox1, allPeople);
             addDateToCombox(comboBox2, allItem);
+            addDateToCombox(comboBox3, allCities);
             addDateToCombox(comboBox4, allPeople);
             addDateToCombox(comboBox5, allItem);
 
             comboBox1.Tag = allPeople;
             comboBox2.Tag = allItem;
+            comboBox3.Tag = allCities;
             comboBox4.Tag = allPeople;
             comboBox5.Tag = allItem;
             comboBox10.Tag = allItem;
@@ -123,8 +126,9 @@ namespace skladoteka
 
             int? personId = string.IsNullOrEmpty(person) ? (int?)null : _myDBContext.GetPersonIdByName(person);
             int? itemId = string.IsNullOrEmpty(item) ? (int?)null : _myDBContext.GetItemIdByName(item);
+            int? cityId = string.IsNullOrEmpty(city) ? (int?)null : _myDBContext.GetCityIdByName(city);
 
-            dataGridView1.DataSource = _myDBContext.GetInventoryRecords(personId, itemId);
+            dataGridView1.DataSource = _myDBContext.GetInventoryRecords(personId, itemId, cityId);
         }
 
         private void DataGridViewCellClicked(object sender, DataGridViewCellEventArgs e)
@@ -179,7 +183,36 @@ namespace skladoteka
 
         private void button3_Click(object sender, EventArgs e)
         {
+            int selectedRowIndex = GetSelectedRowIndex();
 
+            if (selectedRowIndex == -1)
+            {
+                MessageBox.Show("Пожалуйста, выберите строку в таблице.", "Ошибка", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            int recordId = selectedRowIndex + 1;
+
+            string selectedPerson = comboBox11.SelectedItem.ToString();
+            string selectedItem = comboBox10.SelectedItem.ToString();
+
+            int selectedPersonId = _myDBContext.GetPersonIdByName(selectedPerson);
+            int selectedItemId = _myDBContext.GetItemIdByName(selectedItem);
+
+            _myDBContext.UpdateInventory("PersonId", selectedPersonId, recordId);
+            _myDBContext.UpdateInventory("ItemId", selectedItemId, recordId);
+
+            MessageBox.Show("Запись успешно обновлена.", "Успех", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        private int GetSelectedRowIndex()
+        {
+            if (dataGridView1.SelectedCells.Count > 0)
+            {
+                int selectedRow = dataGridView1.SelectedCells[0].RowIndex;
+                return selectedRow;
+            }
+            return -1;
         }
 
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
