@@ -196,7 +196,6 @@ namespace skladoteka
 
         public int GetPersonIdByName(string fullName) => GetIdByParameter("People", "FullName", fullName);
         public int GetCityIdByName(string cityName) => GetIdByParameter("Cities", "Name", cityName);
-
         public int GetItemIdByName(string itemName) => GetIdByParameter("Items", "Name", itemName);
 
         private int GetIdByParameter(string tableName, string columnName, string parameterValue)
@@ -224,6 +223,66 @@ namespace skladoteka
             return id;
         }
 
+        public void AddPerson(string fullName, int cityId)
+        {
+            try
+            {
+                bool cityExists = IsIdValid("Cities", cityId);
+                if (!cityExists)
+                {
+                    Console.WriteLine($"Города с ID {cityId} не существует.");
+                    return;
+                }
+
+                using (var connection = GetConnection())
+                {
+                    connection.Open();
+
+                    string query = "INSERT INTO People (FullName, CityId) VALUES (@FullName, @CityId)";
+
+                    using (var cmd = new SQLiteCommand(query, connection))
+                    {
+                        cmd.Parameters.AddWithValue("@FullName", fullName);
+                        cmd.Parameters.AddWithValue("@CityId", cityId);
+
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+
+                Console.WriteLine("Человек успешно добавлен.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Ошибка при добавлении человека: " + ex.Message);
+            }
+        }
+
+        public void AddItem(string itemName)
+        {
+            try
+            {
+                using (var connection = GetConnection())
+                {
+                    connection.Open();
+
+                    string query = "INSERT INTO Items (Name) VALUES (@Name)";
+
+                    using (var cmd = new SQLiteCommand(query, connection))
+                    {
+                        cmd.Parameters.AddWithValue("@Name", itemName);
+
+                        cmd.ExecuteNonQuery();
+                    }
+                }
+
+                Console.WriteLine("Вещь успешно добавлена.");
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Ошибка при добавлении вещи: " + ex.Message);
+            }
+        }
+
         public DataTable GetInventoryRecords(int? personId = null, int? itemId = null, int? cityId = null)
         {
             DataTable dataTable = new DataTable();
@@ -238,22 +297,18 @@ namespace skladoteka
                                "INNER JOIN People ON Inventory.PersonId = People.Id " +
                                "INNER JOIN Items ON Inventory.ItemId = Items.Id";
 
-                // Добавляем фильтрацию по personId
                 if (personId != null)
                 {
                     query += $" WHERE Inventory.PersonId = {personId}";
                 }
 
-                // Добавляем фильтрацию по itemId
                 if (itemId != null)
                 {
                     query += personId != null ? $" AND Inventory.ItemId = {itemId}" : $" WHERE Inventory.ItemId = {itemId}";
                 }
 
-                // Добавляем фильтрацию по cityId
                 if (cityId != null)
                 {
-                    // Подзапрос для получения идентификаторов людей из указанного города
                     string subQuery = $"SELECT Id FROM People WHERE CityId = {cityId}";
 
                     query += $" AND Inventory.PersonId IN ({subQuery})";

@@ -26,23 +26,7 @@ namespace skladoteka
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            List<string> allPeople = _myDBContext.GetAllPeople();
-            List<string> allItem = _myDBContext.GetAllItems();
-            List<string> allCities = _myDBContext.GetAllCities();
-
-            addDateToCombox(comboBox1, allPeople);
-            addDateToCombox(comboBox2, allItem);
-            addDateToCombox(comboBox3, allCities);
-            addDateToCombox(comboBox4, allPeople);
-            addDateToCombox(comboBox5, allItem);
-
-            comboBox1.Tag = allPeople;
-            comboBox2.Tag = allItem;
-            comboBox3.Tag = allCities;
-            comboBox4.Tag = allPeople;
-            comboBox5.Tag = allItem;
-            comboBox10.Tag = allItem;
-            comboBox11.Tag = allPeople;
+            UpdateDateToCombox();
 
             dataGridView1.DataSource = _myDBContext.GetInventoryRecords();
             dataGridView1.UserDeletingRow += DataGridView_UserDeletingRow;
@@ -52,6 +36,7 @@ namespace skladoteka
             comboBox2.TextChanged += combobox_TextChanged;
             comboBox4.TextChanged += combobox_TextChanged;
             comboBox5.TextChanged += combobox_TextChanged;
+            comboBox8.TextChanged += combobox_TextChanged;
             comboBox10.TextChanged += combobox_TextChanged;
             comboBox11.TextChanged += combobox_TextChanged;
 
@@ -60,7 +45,7 @@ namespace skladoteka
             EnableDisableChangeInfoToInventory(false);
         }
 
-        private void addDateToCombox(ComboBox comboBox, List<string> list)
+        private void AddDateToCombox(ComboBox comboBox, List<string> list)
         {
             comboBox.Items.Clear();
             
@@ -68,6 +53,29 @@ namespace skladoteka
             {
                 comboBox.Items.Add(item);
             }
+        }
+
+        private void UpdateDateToCombox()
+        {
+            List<string> allPeople = _myDBContext.GetAllPeople();
+            List<string> allItem = _myDBContext.GetAllItems();
+            List<string> allCities = _myDBContext.GetAllCities();
+
+            AddDateToCombox(comboBox1, allPeople);
+            AddDateToCombox(comboBox2, allItem);
+            AddDateToCombox(comboBox3, allCities);
+            AddDateToCombox(comboBox4, allPeople);
+            AddDateToCombox(comboBox5, allItem);
+            AddDateToCombox(comboBox8, allCities);
+
+            comboBox1.Tag = allPeople;
+            comboBox2.Tag = allItem;
+            comboBox3.Tag = allCities;
+            comboBox4.Tag = allPeople;
+            comboBox5.Tag = allItem;
+            comboBox8.Tag = allCities;
+            comboBox10.Tag = allItem;
+            comboBox11.Tag = allPeople;
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -84,6 +92,11 @@ namespace skladoteka
             int.TryParse(quantity, out quantityInt);
 
             _myDBContext.AddRecordToInventory(personId, itemId, serialNumber, quantityInt);
+
+            comboBox1.Text = null;
+            comboBox2.Text = null;
+            textBox1.Text = null;
+            textBox2.Text = "1";
         }
 
         private void combobox_TextChanged(object sender, EventArgs e)
@@ -103,7 +116,7 @@ namespace skladoteka
                     List<string> filteredItems = allItems.Where(item => item.ToLower().Contains(searchText)).ToList();
 
                     if (comboBox.SelectedItem == null)
-                        addDateToCombox(comboBox, filteredItems);
+                        AddDateToCombox(comboBox, filteredItems);
 
                     comboBox.Select(selectionStart, selectionLength);
                 }
@@ -140,8 +153,8 @@ namespace skladoteka
         private void ChangeInfoToInventory(int id)
         {
             EnableDisableChangeInfoToInventory(true);
-            addDateToCombox(comboBox11, _myDBContext.GetAllPeople());
-            addDateToCombox(comboBox10, _myDBContext.GetAllItems());
+            AddDateToCombox(comboBox11, _myDBContext.GetAllPeople());
+            AddDateToCombox(comboBox10, _myDBContext.GetAllItems());
 
             Dictionary<string, object> recordValues = _myDBContext.GetInventoryRecordById(id);
 
@@ -213,6 +226,32 @@ namespace skladoteka
                 return selectedRow;
             }
             return -1;
+        }
+
+        private void button4_Click(object sender, EventArgs e)
+        {
+            string fullname = textBox5.Text;
+            string city = comboBox8.Text;
+
+            int cityId = _myDBContext.GetCityIdByName(city);
+
+            _myDBContext.AddPerson(fullname, cityId);
+
+            textBox5.Text = null;
+            comboBox8.Text = null;
+            
+            UpdateDateToCombox();
+        }
+
+        private void button5_Click(object sender, EventArgs e)
+        {
+            string itemName = textBox6.Text;
+
+            _myDBContext.AddItem(itemName);
+
+            textBox6.Text = null;
+
+            UpdateDateToCombox();
         }
 
         private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
@@ -357,6 +396,21 @@ namespace skladoteka
         }
 
         private void textBox4_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void comboBox8_SelectedIndexChanged_1(object sender, EventArgs e)
+        {
+
+        }
+
+        private void textBox5_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void textBox6_TextChanged(object sender, EventArgs e)
         {
 
         }
