@@ -15,7 +15,6 @@ namespace skladoteka
     {
         private MyDBContext _myDBContext;
 
-
         public Form1()
         {
             string dbPath = "skladoteka.db";
