@@ -29,6 +29,7 @@ namespace skladoteka
                 bool peopleTableExists = false;
                 bool itemsTableExists = false;
                 bool inventoryTableExists = false;
+                bool historyTableExists = false; // Добавляем переменную для проверки существования таблицы "История"
 
                 using (var cmd = new SQLiteCommand("SELECT name FROM sqlite_master WHERE type='table' AND name='Cities'", connection))
                 using (var reader = cmd.ExecuteReader())
@@ -54,12 +55,19 @@ namespace skladoteka
                     inventoryTableExists = reader.Read();
                 }
 
-                if (!citiesTableExists || !peopleTableExists || !itemsTableExists || !inventoryTableExists)
+                using (var cmd = new SQLiteCommand("SELECT name FROM sqlite_master WHERE type='table' AND name='History'", connection))
+                using (var reader = cmd.ExecuteReader())
+                {
+                    historyTableExists = reader.Read();
+                }
+
+                if (!citiesTableExists || !peopleTableExists || !itemsTableExists || !inventoryTableExists || !historyTableExists) // Обновляем условие для проверки существования таблицы "История"
                 {
                     string createCitiesTableQuery = "CREATE TABLE IF NOT EXISTS Cities (Id INTEGER PRIMARY KEY, Name TEXT)";
                     string createPeopleTableQuery = "CREATE TABLE IF NOT EXISTS People (Id INTEGER PRIMARY KEY, FullName TEXT, CityId INTEGER, FOREIGN KEY(CityId) REFERENCES Cities(Id))";
                     string createItemsTableQuery = "CREATE TABLE IF NOT EXISTS Items (Id INTEGER PRIMARY KEY, Name TEXT)";
                     string createInventoryTableQuery = "CREATE TABLE IF NOT EXISTS Inventory (Id INTEGER PRIMARY KEY, PersonId INTEGER, ItemId INTEGER, SerialNumber TEXT, DateAdded DATETIME, FOREIGN KEY(PersonId) REFERENCES People(Id), FOREIGN KEY(ItemId) REFERENCES Items(Id))";
+                    string createHistoryTableQuery = "CREATE TABLE IF NOT EXISTS History (Id INTEGER PRIMARY KEY, PersonId INTEGER, ItemId INTEGER, SerialNumber TEXT, DateAdded DATETIME, Comment TEXT, FOREIGN KEY(PersonId) REFERENCES People(Id), FOREIGN KEY(ItemId) REFERENCES Items(Id))";
 
                     using (var cmd = new SQLiteCommand(createCitiesTableQuery, connection))
                     {
@@ -81,6 +89,12 @@ namespace skladoteka
                         cmd.ExecuteNonQuery();
                         Console.WriteLine("Table 'Inventory' created successfully.");
                     }
+                    
+                    using (var cmd = new SQLiteCommand(createHistoryTableQuery, connection))
+                    {
+                        cmd.ExecuteNonQuery();
+                        Console.WriteLine("Table 'History' created successfully.");
+                    }
                 }
                 else
                 {
@@ -88,6 +102,7 @@ namespace skladoteka
                 }
             }
         }
+
 
         public static MyDBContext GetInstance(string dbPath)
         {
@@ -118,6 +133,39 @@ namespace skladoteka
         {
             string query = "SELECT Name FROM Items";
             return GetAllData(query, "Name");
+        }
+
+        public List<string> GetAllSerialNumbers()
+        {
+            List<string> serialNumbers = new List<string>();
+
+            try
+            {
+                using (var connection = new SQLiteConnection(_connectionString))
+                {
+                    connection.Open();
+
+                    string query = "SELECT DISTINCT SerialNumber FROM Inventory";
+
+                    using (var cmd = new SQLiteCommand(query, connection))
+                    {
+                        using (var reader = cmd.ExecuteReader())
+                        {
+                            while (reader.Read())
+                            {
+                                string serialNumber = reader["SerialNumber"].ToString();
+                                serialNumbers.Add(serialNumber);
+                            }
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Ошибка при получении серийных номеров: " + ex.Message);
+            }
+
+            return serialNumbers;
         }
 
         public List<string> GetAllData(string query, string columnName)
@@ -283,48 +331,62 @@ namespace skladoteka
             }
         }
 
-        public DataTable GetInventoryRecords(int? personId = null, int? itemId = null, int? cityId = null)
+        public DataTable GetInventoryRecords(int? personId = null, int? itemId = null, int? cityId = null, string serialNumber = null)
         {
             DataTable dataTable = new DataTable();
 
-            using (var connection = GetConnection())
+            try
             {
-                connection.Open();
-
-                string query = "SELECT People.FullName AS PersonId, Items.Name AS ItemId, " +
-                               "Inventory.SerialNumber, Inventory.DateAdded " +
-                               "FROM Inventory " +
-                               "INNER JOIN People ON Inventory.PersonId = People.Id " +
-                               "INNER JOIN Items ON Inventory.ItemId = Items.Id";
-
-                if (personId != null)
+                using (var connection = GetConnection())
                 {
-                    query += $" WHERE Inventory.PersonId = {personId}";
-                }
+                    connection.Open();
 
-                if (itemId != null)
-                {
-                    query += personId != null ? $" AND Inventory.ItemId = {itemId}" : $" WHERE Inventory.ItemId = {itemId}";
-                }
+                    string query = "SELECT Inventory.Id AS InventoryId, People.FullName AS PersonId, Items.Name AS ItemId, " +
+                                   "Inventory.SerialNumber, Inventory.DateAdded " +
+                                   "FROM Inventory " +
+                                   "INNER JOIN People ON Inventory.PersonId = People.Id " +
+                                   "INNER JOIN Items ON Inventory.ItemId = Items.Id " +
+                                   "WHERE 1 = 1";
 
-                if (cityId != null)
-                {
-                    string subQuery = $"SELECT Id FROM People WHERE CityId = {cityId}";
+                    if (personId != null)
+                        query += $" AND Inventory.PersonId = {personId}";
 
-                    query += $" AND Inventory.PersonId IN ({subQuery})";
-                }
+                    if (itemId != null)
+                        query += $" AND Inventory.ItemId = {itemId}";
 
-                using (var cmd = new SQLiteCommand(query, connection))
-                {
-                    using (var adapter = new SQLiteDataAdapter(cmd))
+                    if (cityId != null)
                     {
-                        adapter.Fill(dataTable);
+                        string subQuery = $"SELECT Id FROM People WHERE CityId = {cityId}";
+                        query += $" AND Inventory.PersonId IN ({subQuery})";
+                    }
+
+                    if (!string.IsNullOrEmpty(serialNumber))
+                        query += $" AND Inventory.SerialNumber LIKE '{serialNumber}%'";
+
+                    using (var cmd = new SQLiteCommand(query, connection))
+                    {
+                        using (var adapter = new SQLiteDataAdapter(cmd))
+                        {
+                            adapter.Fill(dataTable);
+                        }
                     }
                 }
             }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Ошибка при получении записей инвентаря: " + ex.Message);
+            }
 
-            DataColumn indexColumn = new DataColumn("ID", typeof(int));
-            dataTable.Columns.Add(indexColumn);
+            AddCounterColumn(dataTable);
+
+            return dataTable;
+        }
+
+        private void AddCounterColumn(DataTable dataTable)
+        {
+            DataColumn counterColumn = new DataColumn("ID", typeof(int));
+
+            dataTable.Columns.Add(counterColumn);
 
             for (int i = 0; i < dataTable.Rows.Count; i++)
             {
@@ -332,10 +394,7 @@ namespace skladoteka
             }
 
             dataTable.Columns["ID"].SetOrdinal(0);
-
-            return dataTable;
         }
-
 
         public Dictionary<string, object> GetInventoryRecordById(int recordId)
         {

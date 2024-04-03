@@ -28,6 +28,7 @@ namespace skladoteka
             UpdateDateToCombox();
 
             dataGridView1.DataSource = _myDBContext.GetInventoryRecords();
+            SetHideColumn("InventoryId", dataGridView1);
             dataGridView1.UserDeletingRow += DataGridView_UserDeletingRow;
             dataGridView1.CellClick += DataGridViewCellClicked;
 
@@ -35,6 +36,7 @@ namespace skladoteka
             comboBox2.TextChanged += combobox_TextChanged;
             comboBox4.TextChanged += combobox_TextChanged;
             comboBox5.TextChanged += combobox_TextChanged;
+            comboBox6.TextChanged += combobox_TextChanged;
             comboBox8.TextChanged += combobox_TextChanged;
             comboBox10.TextChanged += combobox_TextChanged;
             comboBox11.TextChanged += combobox_TextChanged;
@@ -44,14 +46,13 @@ namespace skladoteka
             EnableDisableChangeInfoToInventory(false);
         }
 
+        // General
+
         private void AddDateToCombox(ComboBox comboBox, List<string> list)
         {
             comboBox.Items.Clear();
-            
-            foreach (string item in list)
-            {
-                comboBox.Items.Add(item);
-            }
+            comboBox.Items.Add("");
+            comboBox.Items.AddRange(list.ToArray());
         }
 
         private void UpdateDateToCombox()
@@ -59,12 +60,14 @@ namespace skladoteka
             List<string> allPeople = _myDBContext.GetAllPeople();
             List<string> allItem = _myDBContext.GetAllItems();
             List<string> allCities = _myDBContext.GetAllCities();
+            List<string> allSerialNumbers = _myDBContext.GetAllSerialNumbers();
 
             AddDateToCombox(comboBox1, allPeople);
             AddDateToCombox(comboBox2, allItem);
             AddDateToCombox(comboBox3, allCities);
             AddDateToCombox(comboBox4, allPeople);
             AddDateToCombox(comboBox5, allItem);
+            AddDateToCombox(comboBox6, allSerialNumbers);
             AddDateToCombox(comboBox8, allCities);
 
             comboBox1.Tag = allPeople;
@@ -72,10 +75,37 @@ namespace skladoteka
             comboBox3.Tag = allCities;
             comboBox4.Tag = allPeople;
             comboBox5.Tag = allItem;
+            comboBox6.Tag = allSerialNumbers;
             comboBox8.Tag = allCities;
             comboBox10.Tag = allItem;
             comboBox11.Tag = allPeople;
         }
+
+        private void combobox_TextChanged(object sender, EventArgs e)
+        {
+            if (sender is ComboBox comboBox)
+            {
+                string searchText = comboBox.Text.ToLower();
+                List<string> allItems = comboBox.Tag as List<string>;
+
+                if (allItems != null)
+                {
+                    int selectionStart = comboBox.SelectionStart;
+                    int selectionLength = comboBox.SelectionLength;
+
+                    List<string> filteredItems = allItems.Where(item => item.ToLower().Contains(searchText)).ToList();
+
+                    if (comboBox.SelectedItem == null)
+                        AddDateToCombox(comboBox, filteredItems);
+
+                    comboBox.Select(selectionStart, selectionLength);
+                }
+            }
+        }
+
+        private void SetHideColumn(string columName, DataGridView dataGridView) => dataGridView.Columns[columName].Visible = false;
+
+        // Insert
 
         private void button1_Click(object sender, EventArgs e)
         {
@@ -96,58 +126,46 @@ namespace skladoteka
             comboBox2.Text = null;
             textBox1.Text = null;
             textBox2.Text = "1";
+
+            UpdateDateToCombox();
         }
 
-        private void combobox_TextChanged(object sender, EventArgs e)
-        {
-            ComboBox comboBox = sender as ComboBox;
-
-            if (comboBox != null)
-            {
-                string searchText = comboBox.Text.ToLower();
-                List<string> allItems = comboBox.Tag as List<string>;
-
-                if (allItems != null)
-                {
-                    int selectionStart = comboBox.SelectionStart;
-                    int selectionLength = comboBox.SelectionLength;
-
-                    List<string> filteredItems = allItems.Where(item => item.ToLower().Contains(searchText)).ToList();
-
-                    if (comboBox.SelectedItem == null)
-                        AddDateToCombox(comboBox, filteredItems);
-
-                    comboBox.Select(selectionStart, selectionLength);
-                }
-            }
-        }
-
-        private void DataGridView_UserDeletingRow(object sender, DataGridViewRowCancelEventArgs e)
-        {
-            int id = Convert.ToInt32(e.Row.Cells["ID"].Value);
-
-            _myDBContext.DeleteInventoryRecord(id);
-        }
-
+        // Inventory
 
         private void button2_Click(object sender, EventArgs e)
         {
             string person = comboBox4.SelectedItem?.ToString();
             string city = comboBox3.SelectedItem?.ToString();
             string item = comboBox5.SelectedItem?.ToString();
+            string serialNumber = comboBox6.SelectedItem?.ToString();
 
             int? personId = string.IsNullOrEmpty(person) ? (int?)null : _myDBContext.GetPersonIdByName(person);
             int? itemId = string.IsNullOrEmpty(item) ? (int?)null : _myDBContext.GetItemIdByName(item);
             int? cityId = string.IsNullOrEmpty(city) ? (int?)null : _myDBContext.GetCityIdByName(city);
 
-            dataGridView1.DataSource = _myDBContext.GetInventoryRecords(personId, itemId, cityId);
+            dataGridView1.DataSource = _myDBContext.GetInventoryRecords(personId, itemId, cityId, serialNumber);
+            SetHideColumn("InventoryId", dataGridView1);
         }
-
+        
         private void DataGridViewCellClicked(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex >= 0)
-                ChangeInfoToInventory(e.RowIndex + 1);
+            {
+                DataGridViewRow selectedRow = dataGridView1.Rows[e.RowIndex];
+                int id = Convert.ToInt32(selectedRow.Cells["InventoryId"].Value);
+
+                ChangeInfoToInventory(id);
+            }
         }
+
+        private void DataGridView_UserDeletingRow(object sender, DataGridViewRowCancelEventArgs e)
+        {
+            int id = Convert.ToInt32(e.Row.Cells["InventoryId"].Value);
+
+            _myDBContext.DeleteInventoryRecord(id);
+        }
+
+        // InfoToInventory
 
         private void ChangeInfoToInventory(int id)
         {
@@ -160,7 +178,6 @@ namespace skladoteka
             if (recordValues.ContainsKey("PersonId"))
             {
                 comboBox11.SelectedItem = recordValues["PersonId"].ToString();
-                
             }
 
             if (recordValues.ContainsKey("ItemId"))
@@ -224,6 +241,7 @@ namespace skladoteka
                 int selectedRow = dataGridView1.SelectedCells[0].RowIndex;
                 return selectedRow;
             }
+
             return -1;
         }
 
@@ -410,6 +428,11 @@ namespace skladoteka
         }
 
         private void textBox6_TextChanged(object sender, EventArgs e)
+        {
+
+        }
+
+        private void comboBox6_SelectedIndexChanged(object sender, EventArgs e)
         {
 
         }

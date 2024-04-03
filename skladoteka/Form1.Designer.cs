@@ -245,6 +245,7 @@ namespace skladoteka
             this.comboBox6.Name = "comboBox6";
             this.comboBox6.Size = new System.Drawing.Size(113, 21);
             this.comboBox6.TabIndex = 20;
+            this.comboBox6.SelectedIndexChanged += new System.EventHandler(this.comboBox6_SelectedIndexChanged);
             // 
             // label10
             // 
