@@ -47,8 +47,6 @@ namespace skladoteka
             this.comboBox4 = new System.Windows.Forms.ComboBox();
             this.comboBox5 = new System.Windows.Forms.ComboBox();
             this.comboBox6 = new System.Windows.Forms.ComboBox();
-            this.label10 = new System.Windows.Forms.Label();
-            this.comboBox7 = new System.Windows.Forms.ComboBox();
             this.dataGridView1 = new System.Windows.Forms.DataGridView();
             this.button2 = new System.Windows.Forms.Button();
             this.label11 = new System.Windows.Forms.Label();
@@ -176,7 +174,7 @@ namespace skladoteka
             // label6
             // 
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(317, 414);
+            this.label6.Location = new System.Drawing.Point(406, 414);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(35, 13);
             this.label6.TabIndex = 18;
@@ -191,11 +189,12 @@ namespace skladoteka
             this.label7.Size = new System.Drawing.Size(51, 13);
             this.label7.TabIndex = 16;
             this.label7.Text = "Человек";
+            this.label7.Click += new System.EventHandler(this.label7_Click);
             // 
             // label8
             // 
             this.label8.AutoSize = true;
-            this.label8.Location = new System.Drawing.Point(200, 414);
+            this.label8.Location = new System.Drawing.Point(245, 414);
             this.label8.Name = "label8";
             this.label8.Size = new System.Drawing.Size(37, 13);
             this.label8.TabIndex = 15;
@@ -204,7 +203,7 @@ namespace skladoteka
             // label9
             // 
             this.label9.AutoSize = true;
-            this.label9.Location = new System.Drawing.Point(437, 414);
+            this.label9.Location = new System.Drawing.Point(524, 414);
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(56, 13);
             this.label9.TabIndex = 14;
@@ -214,9 +213,9 @@ namespace skladoteka
             // comboBox3
             // 
             this.comboBox3.FormattingEnabled = true;
-            this.comboBox3.Location = new System.Drawing.Point(188, 440);
+            this.comboBox3.Location = new System.Drawing.Point(203, 440);
             this.comboBox3.Name = "comboBox3";
-            this.comboBox3.Size = new System.Drawing.Size(79, 21);
+            this.comboBox3.Size = new System.Drawing.Size(147, 21);
             this.comboBox3.TabIndex = 13;
             this.comboBox3.SelectedIndexChanged += new System.EventHandler(this.comboBox3_SelectedIndexChanged);
             // 
@@ -225,14 +224,14 @@ namespace skladoteka
             this.comboBox4.FormattingEnabled = true;
             this.comboBox4.Location = new System.Drawing.Point(25, 439);
             this.comboBox4.Name = "comboBox4";
-            this.comboBox4.Size = new System.Drawing.Size(157, 21);
+            this.comboBox4.Size = new System.Drawing.Size(172, 21);
             this.comboBox4.TabIndex = 12;
             this.comboBox4.SelectedIndexChanged += new System.EventHandler(this.comboBox4_SelectedIndexChanged);
             // 
             // comboBox5
             // 
             this.comboBox5.FormattingEnabled = true;
-            this.comboBox5.Location = new System.Drawing.Point(273, 439);
+            this.comboBox5.Location = new System.Drawing.Point(356, 440);
             this.comboBox5.Name = "comboBox5";
             this.comboBox5.Size = new System.Drawing.Size(131, 21);
             this.comboBox5.TabIndex = 19;
@@ -241,29 +240,11 @@ namespace skladoteka
             // comboBox6
             // 
             this.comboBox6.FormattingEnabled = true;
-            this.comboBox6.Location = new System.Drawing.Point(410, 440);
+            this.comboBox6.Location = new System.Drawing.Point(493, 440);
             this.comboBox6.Name = "comboBox6";
             this.comboBox6.Size = new System.Drawing.Size(113, 21);
             this.comboBox6.TabIndex = 20;
             this.comboBox6.SelectedIndexChanged += new System.EventHandler(this.comboBox6_SelectedIndexChanged);
-            // 
-            // label10
-            // 
-            this.label10.AutoSize = true;
-            this.label10.Location = new System.Drawing.Point(546, 414);
-            this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(33, 13);
-            this.label10.TabIndex = 21;
-            this.label10.Text = "Дата";
-            this.label10.Click += new System.EventHandler(this.label10_Click);
-            // 
-            // comboBox7
-            // 
-            this.comboBox7.FormattingEnabled = true;
-            this.comboBox7.Location = new System.Drawing.Point(529, 440);
-            this.comboBox7.Name = "comboBox7";
-            this.comboBox7.Size = new System.Drawing.Size(77, 21);
-            this.comboBox7.TabIndex = 22;
             // 
             // dataGridView1
             // 
@@ -537,8 +518,6 @@ namespace skladoteka
             this.Controls.Add(this.label11);
             this.Controls.Add(this.button2);
             this.Controls.Add(this.dataGridView1);
-            this.Controls.Add(this.comboBox7);
-            this.Controls.Add(this.label10);
             this.Controls.Add(this.comboBox6);
             this.Controls.Add(this.comboBox5);
             this.Controls.Add(this.label6);
@@ -586,8 +565,6 @@ namespace skladoteka
         private System.Windows.Forms.ComboBox comboBox4;
         private System.Windows.Forms.ComboBox comboBox5;
         private System.Windows.Forms.ComboBox comboBox6;
-        private System.Windows.Forms.Label label10;
-        private System.Windows.Forms.ComboBox comboBox7;
         private System.Windows.Forms.DataGridView dataGridView1;
         private System.Windows.Forms.Button button2;
         private System.Windows.Forms.Label label11;
