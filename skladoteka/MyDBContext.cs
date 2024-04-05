@@ -341,10 +341,11 @@ namespace skladoteka
                 {
                     connection.Open();
 
-                    string query = "SELECT Inventory.Id AS InventoryId, People.FullName AS PersonId, Items.Name AS ItemId, " +
+                    string query = "SELECT Inventory.Id AS InventoryId, People.FullName AS PersonId, Cities.Name AS City, Items.Name AS ItemId, " +
                                    "Inventory.SerialNumber, Inventory.DateAdded " +
                                    "FROM Inventory " +
                                    "INNER JOIN People ON Inventory.PersonId = People.Id " +
+                                   "INNER JOIN Cities ON People.CityId = Cities.Id " + // Присоединяем таблицу "Города"
                                    "INNER JOIN Items ON Inventory.ItemId = Items.Id " +
                                    "WHERE 1 = 1";
 

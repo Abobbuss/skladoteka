@@ -29,6 +29,8 @@ namespace skladoteka
 
             dataGridView1.DataSource = _myDBContext.GetInventoryRecords();
             SetHideColumn("InventoryId", dataGridView1);
+            dataGridView1.AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill;
+
             dataGridView1.UserDeletingRow += DataGridView_UserDeletingRow;
             dataGridView1.CellClick += DataGridViewCellClicked;
 
@@ -152,9 +154,12 @@ namespace skladoteka
             if (e.RowIndex >= 0)
             {
                 DataGridViewRow selectedRow = dataGridView1.Rows[e.RowIndex];
-                int id = Convert.ToInt32(selectedRow.Cells["InventoryId"].Value);
 
-                ChangeInfoToInventory(id);
+                if (selectedRow.Cells["InventoryId"].Value != DBNull.Value && selectedRow.Cells["InventoryId"].Value != null)
+                {
+                    int id = Convert.ToInt32(selectedRow.Cells["InventoryId"].Value);
+                    ChangeInfoToInventory(id);
+                }
             }
         }
 
@@ -438,6 +443,21 @@ namespace skladoteka
         }
 
         private void label7_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label20_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void label23_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void textBox7_TextChanged(object sender, EventArgs e)
         {
 
         }
